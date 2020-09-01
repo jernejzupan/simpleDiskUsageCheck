@@ -1,15 +1,21 @@
 from os.path import join, isdir
-from os import listdir, stat
+from os import listdir, stat, getcwd
 from collections import namedtuple
+
+
+# import pdb; pdb.set_trace()
 
 
 class Element:
     def __init__(self, name, path):
         self.name = name
-        self.path = join(path, name)
+        self.path = join(path, name).replace("\\", "/")
         self.size = 0
 
     def __str__(self):
+        return self.name + " " + self.__formatSize()
+
+    def __repr__(self):
         return self.name + " " + self.__formatSize()
 
     def __formatSize(self):
@@ -37,6 +43,9 @@ class Folder(Element):
 def tree(folder):
     folder.size = 0
     for name in listdir(folder.path):
+        # windows can't handle paths longer than 255
+        if len(join(folder.path, name)) > 255:
+            continue
         if isdir(join(folder.path, name)):
             newElement = tree(Folder(name, folder.path))
         else:
@@ -53,13 +62,15 @@ def printTree(element, level=0, maxLevel=-1, showFiles=True, minSize=-1):
         return
     print("  " * level + str(element))
     if type(element) is Folder:
+        element.content.sort(key=lambda element: element.size)
+        element.content.reverse()
         for element in element.content:
             if maxLevel == -1 or level < maxLevel:
                 printTree(element, level + 1, maxLevel, showFiles, minSize)
 
 
 # data = Item("data", "../../test")
-folder = Folder("src", "D:/Documents/zanimivo/projekti/aktivni/ClapLamp")
+path = getcwd()
+folder = Folder("", path.replace("\\", "/"))
 tree(folder)
 printTree(folder, maxLevel=2, showFiles=False, minSize=500)
-
